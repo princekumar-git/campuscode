@@ -1,4 +1,4 @@
-# CampusCode 🚀
+# </> CampusCode
 
 **CampusCode** is a comprehensive competitive programming and learning platform designed for educational institutes. It enables students to solve coding problems, participate in real-time contests, discuss solutions in forums, and track their progress via gamified leaderboards and detailed PDF reports.
 
