@@ -23,7 +23,7 @@
 ## 🛠️ Tech Stack
 
 * **Backend:** Django (Python)
-* **Database:** SQLite (Default) / PostgreSQL
+* **Database:** SQLite3
 * **Frontend:** HTML, CSS, JavaScript
 * **PDF Generation:** ReportLab
 * **API:** Piston API (for secure code execution)
