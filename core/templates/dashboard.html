@@ -1,0 +1,407 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - CampusCode</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ["Inter", "sans-serif"] },
+                    colors: {
+                        primary: '#1E4A7A',
+                        darkBg: '#0f172a', // Slate 900
+                        darkCard: '#1e293b', // Slate 800
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Glass Effect for Overlay */
+        .glass-overlay {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-darkBg text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300 flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-white dark:bg-darkCard border-r dark:border-gray-800 flex flex-col transition-colors duration-300 hidden md:flex z-20">
+        <div class="h-16 flex items-center px-6 border-b dark:border-gray-800">
+            <i class="fas fa-code text-[#1E4A7A] dark:text-blue-400 text-2xl mr-3"></i>
+            <span class="font-bold text-xl tracking-tight text-[#1E4A7A] dark:text-white">CampusCode</span>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-4 py-3 bg-[#1E4A7A]/10 dark:bg-blue-900/20 text-[#1E4A7A] dark:text-blue-300 rounded-xl font-medium transition">
+                <i class="fas fa-th-large w-5"></i> Dashboard
+            </a>
+            <a href="{% url 'problems' %}" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition">
+                <i class="fas fa-code w-5"></i> Problem Set
+            </a>
+            <a href="{% url 'contests' %}" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition">
+                <i class="fas fa-trophy w-5"></i> Contests
+            </a>
+            <a href="{% url 'stats' %}"class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition"><i class="fas fa-chart-bar w-5"></i> Report
+            </a>
+
+            <a href="{% url 'forum' %}" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition">
+                <i class="fas fa-comments w-5"></i> Forum
+            </a>
+        </nav>
+
+        <div class="p-4 border-t dark:border-gray-800">
+            <div class="flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 border dark:border-gray-700">
+                <div class="w-10 h-10 rounded-full bg-[#1E4A7A] text-white flex items-center justify-center font-bold text-sm">
+                    {{ user.username|slice:":2"|upper }}
+                </div>
+                <div class="overflow-hidden">
+                    <h4 class="text-sm font-bold truncate text-gray-800 dark:text-gray-200">{{ user.username }}</h4>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 block">{{ user.role }}</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50 dark:bg-darkBg transition-colors duration-300">
+        
+        <header class="bg-white dark:bg-darkCard h-16 border-b dark:border-gray-800 flex items-center justify-between px-6 sticky top-0 z-10">
+            
+            <button class="md:hidden text-gray-500 dark:text-gray-400 hover:text-gray-700">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+
+            <h2 class="text-lg font-bold text-gray-800 dark:text-white hidden md:block">Overview</h2>
+
+            <div class="flex items-center gap-4">
+                
+                <button id="theme-toggle" onclick="toggleTheme()" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition focus:outline-none">
+                    <i id="theme-toggle-light-icon" class="fas fa-sun hidden"></i>
+                    <i id="theme-toggle-dark-icon" class="fas fa-moon hidden"></i>
+                </button>
+
+                {% comment %} <button class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button> {% endcomment %}
+
+                <button id="headerProfileBtn" class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-1 pr-3 transition border border-transparent hover:border-gray-200 dark:hover:border-gray-600">
+                    <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=1E4A7A&color=fff" class="w-8 h-8 rounded-full" alt="Profile">
+                    <i class="fas fa-chevron-down text-xs text-gray-400"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6">
+            <div class="max-w-6xl mx-auto space-y-6">
+
+                <div class="bg-gradient-to-r from-[#1E4A7A] to-blue-600 dark:from-blue-900 dark:to-[#1E4A7A] rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h1 class="text-3xl font-bold mb-2">Welcome back, {{ user.first_name|default:user.username }}! 👋</h1>
+                        <p class="text-blue-100 mb-6 max-w-xl">You've maintained a {{ user.streak }} day streak. Keep solving problems to climb the leaderboard.</p>
+                        <a href="{% url 'problems' %}" class="bg-white text-[#1E4A7A] px-6 py-2.5 rounded-lg font-bold hover:bg-gray-100 transition shadow-md inline-flex items-center gap-2">
+                            <i class="fas fa-play"></i> Continue Practice
+                        </a>
+                    </div>
+                    <div class="absolute right-0 top-0 h-full w-1/3 opacity-10">
+                        <i class="fas fa-code text-9xl absolute -right-4 -top-4 transform rotate-12"></i>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Total XP</p>
+                                <h3 class="text-2xl font-bold text-gray-800 dark:text-white mt-1">{{ user.xp }}</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center">
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
+                            <div class="bg-blue-600 h-full rounded-full" style="width: {{ user.xp_percentage }}%"></div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Level {{ user.level }}</p>
+                    </div>
+
+                    <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Global Rank</p>
+                                <h3 class="text-2xl font-bold text-gray-800 dark:text-white mt-1">
+                                    {{ user.global_rank }}</h3>
+                                <p class="text-sm text-gray-400 mt-2">College Rank: <strong class="text-gray-800 dark:text-white">{{ user.college_rank }}</strong></p>
+                            </div>
+                            <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-300 flex items-center justify-center">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-green-500 mt-4 flex items-center gap-1 font-medium">
+                            <i class="fas fa-arrow-up"></i> Top 5%
+                        </p>
+                    </div>
+
+                    <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Problems Solved</p>
+                                <h3 class="text-2xl font-bold text-gray-800 dark:text-white mt-1">
+                                    {{ user.problems_solved }}
+                                </h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 flex items-center justify-center">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-4">{{ user.last_solved_time }}</p>
+                    </div>
+
+                     <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Current Streak</p>
+                                <h3 class="text-2xl font-bold text-gray-800 dark:text-white mt-1">{{ user.streak }} Days</h3>
+                            </div>
+                            <div class="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-300 flex items-center justify-center">
+                                <i class="fas fa-fire"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-4">Keep it up!</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <div class="lg:col-span-2 bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-gray-800 dark:text-white">Activity Overview</h3>
+                            <select id="chartPeriod" class="bg-gray-50 dark:bg-gray-700 border-none text-xs rounded-lg px-3 py-1 text-gray-600 dark:text-gray-300 focus:ring-0 cursor-pointer">
+                                <option value="7">Last 7 Days</option>
+                                <option value="30">Last 30 Days</option>
+                            </select>
+                        </div>
+                        <div class="h-64">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-darkCard p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
+                        <h3 class="font-bold text-gray-800 dark:text-white mb-6">Recent Activity</h3>
+                        <div class="space-y-4">
+                            {% for activity in user.recent_activities %}
+                            <div class="flex items-center gap-4 pb-4 border-b dark:border-gray-700 last:border-0">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs flex-shrink-0
+                                    {% if activity.color == 'green' %}bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400
+                                    {% elif activity.color == 'red' %}bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400
+                                    {% elif activity.color == 'blue' %}bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400
+                                    {% elif activity.color == 'purple' %}bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400
+                                    {% elif activity.color == 'indigo' %}bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400
+                                    {% else %}bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400
+                                    {% endif %}">
+                                    <i class="fas {{ activity.icon }}"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{{ activity.title }}</h4>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ activity.description }}</p>
+                                </div>
+                                <span class="text-xs text-gray-400 flex-shrink-0 whitespace-nowrap">{{ activity.time_ago }}</span>
+                            </div>
+                            {% empty %}
+                            <p class="text-center text-gray-500 dark:text-gray-400 py-4">No recent activity</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="profileOverlay" class="fixed inset-0 z-50 hidden glass-overlay flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="profileCard">
+            
+            <div class="h-32 bg-gradient-to-r from-[#1E4A7A] to-blue-600 relative">
+                <button id="closeProfileOverlay" class="absolute top-4 right-4 text-white/80 hover:text-white transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div class="px-8 pb-8 text-center -mt-12 relative">
+                <div class="w-24 h-24 rounded-full border-4 border-white dark:border-darkCard bg-gray-200 mx-auto overflow-hidden shadow-lg mb-4">
+                    <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=1E4A7A&color=fff&size=128" alt="User">
+                </div>
+                
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">{{ user.first_name }} {{ user.last_name }}</h2>
+                <p class="text-gray-500 dark:text-gray-400 mb-6">@{{ user.username }} • {{ user.college }}</p>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <a href="{% url 'profile' %}" class="flex items-center justify-center gap-2 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition font-medium text-sm">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                    </a>
+                    <a href="{% url 'logout' %}" class="flex items-center justify-center gap-2 py-2.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition font-medium text-sm">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+
+                {% if user.role == 'Admin' %}
+                <a href="{% url 'admin_dashboard' %}" class="block w-full py-3 bg-[#1E4A7A] text-white rounded-lg font-bold shadow hover:bg-blue-900 transition">
+                    <i class="fas fa-shield-alt mr-2"></i> Admin Panel
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark Mode Toggle Logic
+        var themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        var themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            themeToggleLightIcon.classList.remove('hidden');
+        } else {
+            themeToggleDarkIcon.classList.remove('hidden');
+        }
+
+        function toggleTheme() {
+            themeToggleDarkIcon.classList.toggle('hidden');
+            themeToggleLightIcon.classList.toggle('hidden');
+
+            if (localStorage.theme === 'light') {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+                updateChartTheme('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+                updateChartTheme('light');
+            }
+        }
+
+        // Profile Overlay Logic
+        const profileBtn = document.getElementById("headerProfileBtn");
+        const profileOverlay = document.getElementById("profileOverlay");
+        const profileCard = document.getElementById("profileCard");
+        const closeProfile = document.getElementById("closeProfileOverlay");
+
+        function openProfile() {
+            profileOverlay.classList.remove("hidden");
+            setTimeout(() => {
+                profileOverlay.classList.remove("opacity-0");
+                profileCard.classList.remove("scale-95");
+                profileCard.classList.add("scale-100");
+            }, 10);
+        }
+
+        function closeProfileFunc() {
+            profileOverlay.classList.add("opacity-0");
+            profileCard.classList.remove("scale-100");
+            profileCard.classList.add("scale-95");
+            setTimeout(() => {
+                profileOverlay.classList.add("hidden");
+            }, 300);
+        }
+
+        profileBtn.addEventListener("click", openProfile);
+        closeProfile.addEventListener("click", closeProfileFunc);
+        profileOverlay.addEventListener("click", (e) => {
+            if(e.target === profileOverlay) closeProfileFunc();
+        });
+
+        // Chart.js Implementation
+        const ctx = document.getElementById('activityChart').getContext('2d');
+        let chartInstance;
+
+        function initChart() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+
+            if(chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {{ activity_labels|safe }},
+                    datasets: [{
+                        label: 'Problems Solved',
+                        data: {{ activity_data|safe }},
+                        borderColor: '#1E4A7A', // Primary Color
+                        backgroundColor: 'rgba(30, 74, 122, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#1E4A7A',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: isDark ? '#1e293b' : '#fff',
+                            titleColor: isDark ? '#fff' : '#1e293b',
+                            bodyColor: isDark ? '#cbd5e1' : '#64748b',
+                            borderColor: isDark ? '#334155' : '#e2e8f0',
+                            borderWidth: 1,
+                            padding: 10,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor, borderDash: [5, 5] },
+                            ticks: { color: textColor }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: textColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartTheme() {
+            initChart();
+        }
+
+        document.addEventListener('DOMContentLoaded', initChart);
+
+    </script>
+</body>
+</html>

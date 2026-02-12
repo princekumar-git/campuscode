@@ -1,0 +1,308 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forum - CampusCode</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ["Inter", "sans-serif"] },
+                    colors: {
+                        primary: '#1E4A7A',
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        .glass-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-darkBg text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300 flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-white dark:bg-darkCard border-r dark:border-gray-800 flex flex-col transition-colors duration-300 hidden md:flex z-20">
+        <div class="h-16 flex items-center px-6 border-b dark:border-gray-800">
+            <i class="fas fa-code text-[#1E4A7A] dark:text-blue-400 text-2xl mr-3"></i>
+            <span class="font-bold text-xl tracking-tight text-[#1E4A7A] dark:text-white">CampusCode</span>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition">
+                <i class="fas fa-th-large w-5"></i> Dashboard
+            </a>
+            <a href="{% url 'problems' %}" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition">
+                <i class="fas fa-code w-5"></i> Problem Set
+            </a>
+            <a href="{% url 'contests' %}" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition">
+                <i class="fas fa-trophy w-5"></i> Contests
+            </a>
+            <a href="{% url 'stats' %}"class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition"><i class="fas fa-chart-bar w-5"></i> Report
+            </a>
+
+            <a href="{% url 'forum' %}" class="flex items-center gap-3 px-4 py-3 bg-[#1E4A7A]/10 dark:bg-blue-900/20 text-[#1E4A7A] dark:text-blue-300 rounded-xl font-medium transition">
+                <i class="fas fa-comments w-5"></i> Forum
+            </a>
+        </nav>
+
+        <div class="p-4 border-t dark:border-gray-800">
+            <div class="flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 border dark:border-gray-700">
+                <div class="w-10 h-10 rounded-full bg-[#1E4A7A] text-white flex items-center justify-center font-bold text-sm">
+                    {{ user.username|slice:":2"|upper }}
+                </div>
+                <div class="overflow-hidden">
+                    <h4 class="text-sm font-bold truncate text-gray-800 dark:text-gray-200">{{ user.username }}</h4>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 block">{{ user.role }}</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50 dark:bg-darkBg transition-colors duration-300">
+        
+        <header class="bg-white dark:bg-darkCard h-16 border-b dark:border-gray-800 flex items-center justify-between px-6 sticky top-0 z-10">
+            <div class="flex items-center gap-4">
+                <button class="md:hidden text-gray-500 dark:text-gray-400 hover:text-gray-700">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <h2 class="text-lg font-bold text-gray-800 dark:text-white">Community Forum</h2>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button onclick="toggleTheme()" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    <i id="theme-toggle-light-icon" class="fas fa-sun hidden"></i>
+                    <i id="theme-toggle-dark-icon" class="fas fa-moon hidden"></i>
+                </button>
+
+                <button id="headerProfileBtn" class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-1 pr-3 transition">
+                    <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=1E4A7A&color=fff" class="w-8 h-8 rounded-full" alt="Profile">
+                    <i class="fas fa-chevron-down text-xs text-gray-400"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6">
+            <div class="max-w-6xl mx-auto">
+                
+                <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                    <div class="relative w-full md:w-96">
+                        <i class="fas fa-search absolute left-4 top-3.5 text-gray-400"></i>
+                        <input type="text" placeholder="Search discussions..." class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-darkCard focus:ring-2 focus:ring-blue-500 outline-none text-gray-700 dark:text-gray-200 shadow-sm transition">
+                    </div>
+
+                    <a href="{% url 'create_thread' %}" class="w-full md:w-auto px-6 py-3 bg-[#1E4A7A] hover:bg-blue-800 text-white rounded-xl font-bold shadow-lg shadow-blue-900/20 transition flex items-center justify-center gap-2">
+                        <i class="fas fa-plus"></i> New Thread
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    
+                    <div class="lg:col-span-3 space-y-4">
+                        {% for thread in threads %}
+                        <div class="bg-white dark:bg-darkCard p-5 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md transition group relative">
+                            <div class="flex items-start gap-4">
+                                <div class="flex flex-col items-center gap-1 pt-1">
+                                    <button class="text-gray-400 hover:text-orange-500 transition"><i class="fas fa-caret-up text-2xl"></i></button>
+                                    <span class="font-bold text-gray-700 dark:text-gray-300 text-sm">{{ thread.score|default:"0" }}</span>
+                                    <button class="text-gray-400 hover:text-blue-500 transition"><i class="fas fa-caret-down text-2xl"></i></button>
+                                </div>
+
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="px-2 py-0.5 rounded text-xs font-bold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">{{ thread.category.name|default:"General" }}</span>
+                                        <span class="text-xs text-gray-400">• Posted by {{ thread.author.username }} • {{ thread.created_at|timesince }} ago</span>
+                                    </div>
+                                    
+                                    <a href="{% url 'forum_thread_detail' thread.id %}" class="block">
+                                        <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2 group-hover:text-[#1E4A7A] dark:group-hover:text-blue-400 transition">
+                                            {{ thread.title }}
+                                        </h3>
+                                        <p class="text-gray-500 dark:text-gray-400 text-sm line-clamp-2 mb-3">
+                                            {{ thread.content|striptags }}
+                                        </p>
+                                    </a>
+
+                                    <div class="flex items-center gap-6 text-sm text-gray-500 dark:text-gray-400">
+                                        <div class="flex items-center gap-2">
+                                            <i class="far fa-comment-alt"></i> {{ thread.reply_count|default:"0" }} comments
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <i class="far fa-eye"></i> {{ thread.views|default:"0" }} views
+                                        </div>
+                                        <div class="flex -space-x-2 ml-auto">
+                                            <div class="w-6 h-6 rounded-full bg-gray-200 border-2 border-white dark:border-darkCard"></div>
+                                            <div class="w-6 h-6 rounded-full bg-gray-300 border-2 border-white dark:border-darkCard"></div>
+                                            <div class="w-6 h-6 rounded-full bg-gray-400 border-2 border-white dark:border-darkCard flex items-center justify-center text-[8px] text-white font-bold">+3</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-16 bg-white dark:bg-darkCard rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                            <div class="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400 text-2xl">
+                                <i class="far fa-comments"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800 dark:text-white">No discussions yet</h3>
+                            <p class="text-gray-500 dark:text-gray-400 mb-6">Be the first to start a conversation in the community.</p>
+                            <a href="{% url 'create_thread' %}" class="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition">Create Thread</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="hidden lg:block space-y-6">
+                        
+                        <div class="bg-white dark:bg-darkCard p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                            <h3 class="font-bold text-gray-800 dark:text-white mb-4">Community Stats</h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-500 dark:text-gray-400 text-sm">Total Threads</span>
+                                    <span class="font-bold text-gray-800 dark:text-white text-sm">{{ total_threads }}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-500 dark:text-gray-400 text-sm">Total Replies</span>
+                                    <span class="font-bold text-gray-800 dark:text-white text-sm">{{ total_replies }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-darkCard p-6 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                            <h3 class="font-bold text-gray-800 dark:text-white mb-4">Top Contributors</h3>
+                            <div class="space-y-4">
+                                {% for contributor in top_contributors %}
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-xs">
+                                        {{ contributor.username|slice:":1"|upper }}
+                                    </div>
+                                    <div class="flex-1">
+                                        <h4 class="text-sm font-bold text-gray-800 dark:text-white">{{ contributor.username }}</h4>
+                                        <p class="text-xs text-gray-500">{{ contributor.contribution_count }} contributions</p>
+                                    </div>
+                                    {% if forloop.counter == 1 %}
+                                        <i class="fas fa-medal text-yellow-400"></i>
+                                    {% elif forloop.counter == 2 %}
+                                        <i class="fas fa-medal text-gray-400"></i>
+                                    {% elif forloop.counter == 3 %}
+                                        <i class="fas fa-medal text-orange-400"></i>
+                                    {% endif %}
+                                </div>
+                                {% empty %}
+                                <p class="text-sm text-gray-500 dark:text-gray-400">No contributors yet</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                            <h4 class="font-bold text-blue-800 dark:text-blue-300 text-sm mb-2"><i class="fas fa-info-circle mr-1"></i> Forum Rules</h4>
+                            <ul class="text-xs text-blue-700 dark:text-blue-200 space-y-2 list-disc pl-4">
+                                <li>Be respectful to others.</li>
+                                <li>No spamming or self-promo.</li>
+                                <li>Use code blocks for code.</li>
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="profileOverlay" class="fixed inset-0 z-50 hidden glass-overlay flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="profileCard">
+            <div class="h-32 bg-gradient-to-r from-[#1E4A7A] to-blue-600 relative">
+                <button id="closeProfileOverlay" class="absolute top-4 right-4 text-white/80 hover:text-white transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="px-8 pb-8 text-center -mt-12 relative">
+                <div class="w-24 h-24 rounded-full border-4 border-white dark:border-darkCard bg-gray-200 mx-auto overflow-hidden shadow-lg mb-4">
+                    <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=1E4A7A&color=fff&size=128" alt="User">
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">{{ user.first_name }} {{ user.last_name }}</h2>
+                <p class="text-gray-500 dark:text-gray-400 mb-6">@{{ user.username }}</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <a href="{% url 'profile' %}" class="py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-medium text-sm">Edit Profile</a>
+                    <a href="{% url 'logout' %}" class="py-2.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg font-medium text-sm">Sign Out</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark Mode Toggle
+        var themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        var themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            themeToggleLightIcon.classList.remove('hidden');
+        } else {
+            themeToggleDarkIcon.classList.remove('hidden');
+        }
+
+        function toggleTheme() {
+            themeToggleDarkIcon.classList.toggle('hidden');
+            themeToggleLightIcon.classList.toggle('hidden');
+            if (localStorage.theme === 'light') {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            }
+        }
+
+        // Profile Overlay Logic
+        const profileBtn = document.getElementById("headerProfileBtn");
+        const profileOverlay = document.getElementById("profileOverlay");
+        const profileCard = document.getElementById("profileCard");
+        const closeProfile = document.getElementById("closeProfileOverlay");
+
+        function openProfile() {
+            profileOverlay.classList.remove("hidden");
+            setTimeout(() => {
+                profileOverlay.classList.remove("opacity-0");
+                profileCard.classList.remove("scale-95");
+                profileCard.classList.add("scale-100");
+            }, 10);
+        }
+
+        function closeProfileFunc() {
+            profileOverlay.classList.add("opacity-0");
+            profileCard.classList.remove("scale-100");
+            profileCard.classList.add("scale-95");
+            setTimeout(() => {
+                profileOverlay.classList.add("hidden");
+            }, 300);
+        }
+
+        if(profileBtn) profileBtn.addEventListener("click", openProfile);
+        if(closeProfile) closeProfile.addEventListener("click", closeProfileFunc);
+        if(profileOverlay) profileOverlay.addEventListener("click", (e) => {
+            if(e.target === profileOverlay) closeProfileFunc();
+        });
+    </script>
+</body>
+</html>

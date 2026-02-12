@@ -1,0 +1,346 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Problem Set - CampusCode</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ["Inter", "sans-serif"] },
+                    colors: {
+                        primary: '#1E4A7A',
+                        darkBg: '#0f172a', // Slate 900
+                        darkCard: '#1e293b', // Slate 800
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Glass Effect */
+        .glass-overlay {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-darkBg text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300 flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-white dark:bg-darkCard border-r dark:border-gray-800 flex flex-col transition-colors duration-300 hidden md:flex z-20">
+        <div class="h-16 flex items-center px-6 border-b dark:border-gray-800">
+            <i class="fas fa-code text-[#1E4A7A] dark:text-blue-400 text-2xl mr-3"></i>
+            <span class="font-bold text-xl tracking-tight text-[#1E4A7A] dark:text-white">CampusCode</span>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition">
+                <i class="fas fa-th-large w-5"></i> Dashboard
+            </a>
+            <a href="{% url 'problems' %}" class="flex items-center gap-3 px-4 py-3 bg-[#1E4A7A]/10 dark:bg-blue-900/20 text-[#1E4A7A] dark:text-blue-400 rounded-xl font-medium transition">
+                <i class="fas fa-code w-5"></i> Problem Set
+            </a>
+            <a href="{% url 'contests' %}" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition">
+                <i class="fas fa-trophy w-5"></i> Contests
+            </a>
+            <a href="{% url 'stats' %}"class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition"><i class="fas fa-chart-bar w-5"></i> Report
+            </a>
+
+            <a href="{% url 'forum' %}" class="flex items-center gap-3 px-4 py-3 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white rounded-xl font-medium transition">
+                <i class="fas fa-comments w-5"></i> Forum
+            </a>
+        </nav>
+
+        <div class="p-4 border-t dark:border-gray-800">
+            <div class="flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-gray-800/50 border dark:border-gray-700">
+                <div class="w-10 h-10 rounded-full bg-[#1E4A7A] text-white flex items-center justify-center font-bold text-sm">
+                    {{ user.username|slice:":2"|upper }}
+                </div>
+                <div class="overflow-hidden">
+                    <h4 class="text-sm font-bold truncate text-gray-800 dark:text-gray-200">{{ user.username }}</h4>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 block">{{ user.role }}</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50 dark:bg-darkBg transition-colors duration-300">
+        
+        <header class="bg-white dark:bg-darkCard h-16 border-b dark:border-gray-800 flex items-center justify-between px-6 sticky top-0 z-10">
+            <button class="md:hidden text-gray-500 dark:text-gray-400 hover:text-gray-700">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+
+            <h2 class="text-lg font-bold text-gray-800 dark:text-white hidden md:block">Problem Set</h2>
+
+            <div class="flex items-center gap-4">
+                <button id="theme-toggle" onclick="toggleTheme()" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition focus:outline-none">
+                    <i id="theme-toggle-light-icon" class="fas fa-sun hidden"></i>
+                    <i id="theme-toggle-dark-icon" class="fas fa-moon hidden"></i>
+                </button>
+
+                {% comment %} <button class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button> {% endcomment %}
+
+                <button id="headerProfileBtn" class="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full p-1 pr-3 transition border border-transparent hover:border-gray-200 dark:hover:border-gray-600">
+                    <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=1E4A7A&color=fff" class="w-8 h-8 rounded-full" alt="Profile">
+                    <i class="fas fa-chevron-down text-xs text-gray-400"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6">
+            <div class="max-w-6xl mx-auto">
+                
+                <div class="bg-white dark:bg-darkCard p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <div class="relative w-full md:w-96">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        <input type="text" id="searchInput" placeholder="Search problems..." 
+                            class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:ring-2 focus:ring-[#1E4A7A] focus:border-transparent outline-none dark:text-gray-200 transition">
+                    </div>
+                    
+                    <div class="flex gap-2 w-full md:w-auto overflow-x-auto">
+                        <select id="difficultyFilter" class="px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 outline-none cursor-pointer">
+                            <option value="">Difficulty</option>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                        <select id="statusFilter" class="px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 outline-none cursor-pointer">
+                            <option value="">Status</option>
+                            <option value="solved">Solved</option>
+                            <option value="unsolved">Unsolved</option>
+                        </select>
+                        <button class="px-4 py-2.5 rounded-lg bg-[#1E4A7A] text-white text-sm font-medium hover:bg-blue-800 transition">
+                            <i class="fas fa-random mr-1"></i> Pick One
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-darkCard rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700">
+                                    <th class="p-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16 text-center">Status</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">Difficulty</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32">Acceptance</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-24">Points</th>
+                                    <th class="p-4 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider w-32 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                                {% for problem in problems %}
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition duration-150 group problem-row" data-problem-id="{{ problem.id }}" data-difficulty="{{ problem.difficulty }}" data-title="{{ problem.title|lower }}" data-solved="{% if problem.id in solved_ids %}1{% else %}0{% endif %}">
+                                    <td class="p-4 text-center">
+                                        {% if problem.id in solved_ids %}
+                                            <i class="fas fa-check-circle text-green-500 text-lg"></i>
+                                        {% else %}
+                                            <i class="far fa-circle text-gray-300 dark:text-gray-600 group-hover:text-gray-400"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td class="p-4">
+                                        <a href="{% url 'solve_problem' id=problem.id %}" class="font-medium text-gray-800 dark:text-gray-200 hover:text-[#1E4A7A] dark:hover:text-blue-400 transition">
+                                            {{ problem.title }}
+                                        </a>
+                                        <div class="flex gap-2 mt-1">
+                                            {% for tag in problem.tags|default:"array,hash-table"|slice:":2" %} <span class="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full">{{ tag }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                    <td class="p-4">
+                                        {% if problem.difficulty == 'Easy' %}
+                                            <span class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2.5 py-1 rounded-full text-xs font-bold">Easy</span>
+                                        {% elif problem.difficulty == 'Medium' %}
+                                            <span class="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 px-2.5 py-1 rounded-full text-xs font-bold">Medium</span>
+                                        {% else %}
+                                            <span class="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-2.5 py-1 rounded-full text-xs font-bold">Hard</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="p-4 text-sm text-gray-600 dark:text-gray-400">{{ problem.acceptance }}</td>
+                                    <td class="p-4 text-sm font-medium text-gray-600 dark:text-gray-400">{{ problem.points }} XP</td>
+                                    <td class="p-4 text-right">
+                                        <a href="{% url 'solve_problem' id=problem.id %}" class="inline-flex items-center text-[#1E4A7A] dark:text-blue-400 hover:text-blue-800 dark:hover:text-white font-medium text-sm transition">
+                                            Solve <i class="fas fa-chevron-right ml-1 text-xs"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="p-12 text-center">
+                                        <div class="flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+                                            <i class="fas fa-clipboard-list text-4xl mb-4"></i>
+                                            <p class="text-lg font-medium">No problems found</p>
+                                            <p class="text-sm">Check back later or adjust your filters.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="bg-gray-50 dark:bg-gray-800/30 p-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Showing 1-{{ problems|length }} of {{ problems|length }}</span>
+                        <div class="flex gap-1">
+                            <button disabled class="px-3 py-1 rounded border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600 text-xs cursor-not-allowed">Prev</button>
+                            <button class="px-3 py-1 rounded bg-[#1E4A7A] text-white text-xs font-bold">1</button>
+                            <button class="px-3 py-1 rounded border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs transition">2</button>
+                            <button class="px-3 py-1 rounded border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs transition">Next</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div id="profileOverlay" class="fixed inset-0 z-50 hidden glass-overlay flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <div class="bg-white dark:bg-darkCard w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="profileCard">
+            <div class="h-32 bg-gradient-to-r from-[#1E4A7A] to-blue-600 relative">
+                <button id="closeProfileOverlay" class="absolute top-4 right-4 text-white/80 hover:text-white transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="px-8 pb-8 text-center -mt-12 relative">
+                <div class="w-24 h-24 rounded-full border-4 border-white dark:border-darkCard bg-gray-200 mx-auto overflow-hidden shadow-lg mb-4">
+                    <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=1E4A7A&color=fff&size=128" alt="User">
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">{{ user.first_name }} {{ user.last_name }}</h2>
+                <p class="text-gray-500 dark:text-gray-400 mb-6">@{{ user.username }} • {{ user.college }}</p>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <a href="{% url 'profile' %}" class="flex items-center justify-center gap-2 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition font-medium text-sm">
+                        <i class="fas fa-user-edit"></i> Edit Profile
+                    </a>
+                    <a href="{% url 'logout' %}" class="flex items-center justify-center gap-2 py-2.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition font-medium text-sm">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </a>
+                </div>
+                {% if user.role == 'Admin' %}
+                <a href="{% url 'admin_dashboard' %}" class="block w-full py-3 bg-[#1E4A7A] text-white rounded-lg font-bold shadow hover:bg-blue-900 transition">
+                    <i class="fas fa-shield-alt mr-2"></i> Admin Panel
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        var themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            themeToggleLightIcon.classList.remove('hidden');
+        } else {
+            themeToggleDarkIcon.classList.remove('hidden');
+        }
+
+        function toggleTheme() {
+            themeToggleDarkIcon.classList.toggle('hidden');
+            themeToggleLightIcon.classList.toggle('hidden');
+            if (localStorage.theme === 'light') {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            }
+        }
+
+        const profileBtn = document.getElementById("headerProfileBtn");
+        const profileOverlay = document.getElementById("profileOverlay");
+        const profileCard = document.getElementById("profileCard");
+        const closeProfile = document.getElementById("closeProfileOverlay");
+
+        function openProfile() {
+            profileOverlay.classList.remove("hidden");
+            setTimeout(() => {
+                profileOverlay.classList.remove("opacity-0");
+                profileCard.classList.remove("scale-95");
+                profileCard.classList.add("scale-100");
+            }, 10);
+        }
+
+        function closeProfileFunc() {
+            profileOverlay.classList.add("opacity-0");
+            profileCard.classList.remove("scale-100");
+            profileCard.classList.add("scale-95");
+            setTimeout(() => {
+                profileOverlay.classList.add("hidden");
+            }, 300);
+        }
+
+        profileBtn.addEventListener("click", openProfile);
+        closeProfile.addEventListener("click", closeProfileFunc);
+        profileOverlay.addEventListener("click", (e) => {
+            if(e.target === profileOverlay) closeProfileFunc();
+        });
+
+        const searchInput = document.getElementById("searchInput");
+        const difficultyFilter = document.getElementById("difficultyFilter");
+        const statusFilter = document.getElementById("statusFilter");
+        const problemRows = document.querySelectorAll(".problem-row");
+
+        function filterProblems() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const difficulty = difficultyFilter.value;
+            const status = statusFilter.value;
+
+            problemRows.forEach(row => {
+                const title = row.dataset.title;
+                const rowDifficulty = row.dataset.difficulty;
+                const isSolved = row.dataset.solved === "1";
+
+                let show = true;
+
+                if (searchTerm && !title.includes(searchTerm)) {
+                    show = false;
+                }
+
+                if (difficulty && rowDifficulty !== difficulty) {
+                    show = false;
+                }
+
+                if (status === "solved" && !isSolved) {
+                    show = false;
+                } else if (status === "unsolved" && isSolved) {
+                    show = false;
+                }
+
+                row.style.display = show ? "" : "none";
+            });
+        }
+
+        searchInput.addEventListener("keyup", filterProblems);
+        difficultyFilter.addEventListener("change", filterProblems);
+        statusFilter.addEventListener("change", filterProblems);
+    </script>
+</body>
+</html>

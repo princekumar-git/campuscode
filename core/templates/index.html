@@ -1,0 +1,390 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusCode - Master Competitive Programming</title>
+    <link rel="shortcut icon" href="{% static 'images/logo.png' %}" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Enables toggling via 'dark' class on HTML tag
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E4A7A',
+                        darkBg: '#0f172a', // Slate 900
+                        darkCard: '#1e293b', // Slate 800
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    
+    <style>
+        /* Auth Container Styles */
+        .auth-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+            position: relative;
+            overflow: hidden;
+            width: 768px;
+            max-width: 100%;
+            min-height: 480px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Dark Mode for Auth Container */
+        .dark .auth-container {
+            background-color: #1e293b; /* Slate 800 */
+            color: #f1f5f9;
+        }
+        .dark .auth-container form {
+            background-color: #1e293b;
+            color: #f1f5f9;
+        }
+        .dark .auth-container input {
+            background-color: #334155; /* Slate 700 */
+            color: #fff;
+        }
+        .dark .auth-container h1 {
+            color: #fff;
+        }
+        .dark .social-container a {
+            border-color: #475569;
+            color: #cbd5e1;
+        }
+        .dark .social-container a:hover {
+            background-color: #334155;
+        }
+
+        .form-container {
+            position: absolute; top: 0; height: 100%; transition: all 0.6s ease-in-out;
+        }
+        .sign-in-container { left: 0; width: 50%; z-index: 2; }
+        .sign-up-container { left: 0; width: 50%; opacity: 0; z-index: 1; }
+        
+        .container-box.right-panel-active .sign-in-container { transform: translateX(100%); }
+        .container-box.right-panel-active .sign-up-container { transform: translateX(100%); opacity: 1; z-index: 5; animation: show 0.6s; }
+        
+        @keyframes show { 0%, 49.99% { opacity: 0; z-index: 1; } 50%, 100% { opacity: 1; z-index: 5; } }
+        
+        .overlay-container {
+            position: absolute; top: 0; left: 50%; width: 50%; height: 100%;
+            overflow: hidden; transition: transform 0.6s ease-in-out; z-index: 100;
+        }
+        .container-box.right-panel-active .overlay-container { transform: translateX(-100%); }
+        
+        .overlay {
+            background: linear-gradient(to right, #1E4A7A, #0D2440);
+            background-repeat: no-repeat; background-size: cover; background-position: 0 0;
+            color: #FFFFFF; position: relative; left: -100%; height: 100%; width: 200%;
+            transform: translateX(0); transition: transform 0.6s ease-in-out;
+        }
+        /* Dark mode overlay gradient tweak */
+        .dark .overlay {
+            background: linear-gradient(to right, #0f172a, #1e293b); 
+        }
+
+        .container-box.right-panel-active .overlay { transform: translateX(50%); }
+        
+        .overlay-panel {
+            position: absolute; display: flex; align-items: center; justify-content: center;
+            flex-direction: column; padding: 0 40px; text-align: center; top: 0; height: 100%; width: 50%;
+            transform: translateX(0); transition: transform 0.6s ease-in-out;
+        }
+        .overlay-left { transform: translateX(-20%); }
+        .container-box.right-panel-active .overlay-left { transform: translateX(0); }
+        .overlay-right { right: 0; transform: translateX(0); }
+        .container-box.right-panel-active .overlay-right { transform: translateX(20%); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .modal-animate { animation: fadeIn 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans transition-colors duration-300 dark:bg-darkBg dark:text-gray-200">
+
+    {% if messages %}
+    <div class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[60]">
+        {% for message in messages %}
+        <div class="bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 px-6 py-3 rounded shadow-lg flex items-center gap-3">
+            <i class="fas fa-info-circle"></i>
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-800 dark:hover:text-white ml-2"><i class="fas fa-times"></i></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <nav class="bg-white/90 dark:bg-darkBg/90 backdrop-blur-md border-b dark:border-gray-800 fixed w-full z-40 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-code text-[#1E4A7A] dark:text-blue-400 text-2xl"></i>
+                <span class="font-bold text-xl tracking-tight text-[#1E4A7A] dark:text-white">CampusCode</span>
+            </div>
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600 dark:text-gray-300">
+                <a href="#features" class="hover:text-[#1E4A7A] dark:hover:text-blue-400 transition">Features</a>
+                <a href="#contests" class="hover:text-[#1E4A7A] dark:hover:text-blue-400 transition">Contests</a>
+                <a href="#community" class="hover:text-[#1E4A7A] dark:hover:text-blue-400 transition">Community</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <button id="theme-toggle" onclick="toggleTheme()" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 transition">
+                    <i id="theme-toggle-light-icon" class="fas fa-sun hidden"></i>
+                    <i id="theme-toggle-dark-icon" class="fas fa-moon hidden"></i>
+                </button>
+
+                <button onclick="openModal('signin')" class="text-gray-600 dark:text-gray-300 hover:text-[#1E4A7A] dark:hover:text-blue-400 font-medium text-sm">Log In</button>
+                <button onclick="openModal('signup')" class="bg-[#1E4A7A] hover:bg-[#163a63] dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-bold transition transform hover:scale-105 shadow-md">
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-gray-50 dark:bg-darkBg transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+            <div class="relative z-10">
+                <div class="inline-block bg-blue-50 dark:bg-blue-900/30 text-[#1E4A7A] dark:text-blue-300 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide mb-6 border border-blue-100 dark:border-blue-800">
+                    🚀 NEW: Monthly Coding Contests
+                </div>
+                <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6">
+                    Master Coding. <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#1E4A7A] to-blue-500 dark:from-blue-400 dark:to-teal-300">Build Your Future.</span>
+                </h1>
+                <p class="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-lg leading-relaxed">
+                    Join thousands of students competing, learning, and growing. Solve real-world problems, execute code instantly, and climb the global leaderboard.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button onclick="openModal('signup')" class="bg-[#1E4A7A] dark:bg-blue-600 text-white px-8 py-3.5 rounded-lg font-bold text-lg hover:bg-[#163a63] dark:hover:bg-blue-700 transition shadow-lg flex items-center justify-center gap-2">
+                        Start Coding Now <i class="fas fa-arrow-right text-sm"></i>
+                    </button>
+                    <a href="#features" class="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-700 px-8 py-3.5 rounded-lg font-bold text-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition flex items-center justify-center">
+                        Learn More
+                    </a>
+                </div>
+                
+                <div class="mt-10 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 font-medium">
+                    <div class="flex -space-x-2">
+                        <img src="https://i.pravatar.cc/100?img=1" class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800" alt="User">
+                        <img src="https://i.pravatar.cc/100?img=2" class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800" alt="User">
+                        <img src="https://i.pravatar.cc/100?img=3" class="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800" alt="User">
+                    </div>
+                    <span>Joined by 10,000+ Students</span>
+                </div>
+            </div>
+            
+            <div class="relative">
+                <div class="absolute -top-20 -right-20 w-96 h-96 bg-blue-200 dark:bg-blue-900 rounded-full mix-blend-multiply dark:mix-blend-lighten filter blur-3xl opacity-30 animate-blob"></div>
+                <div class="absolute -bottom-20 -left-20 w-96 h-96 bg-indigo-200 dark:bg-purple-900 rounded-full mix-blend-multiply dark:mix-blend-lighten filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+                
+                <div class="relative bg-gray-900 dark:bg-black rounded-xl shadow-2xl p-2 border border-gray-700 transform rotate-2 hover:rotate-0 transition duration-500">
+                    <div class="bg-black rounded-lg p-4 overflow-hidden">
+                        <div class="flex items-center gap-2 mb-4 border-b border-gray-800 pb-2">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span class="ml-2 text-xs text-gray-500 font-mono">solution.py</span>
+                        </div>
+                        <div class="font-mono text-sm">
+                            <div class="text-purple-400">def <span class="text-blue-400">solve_problem</span>(input):</div>
+                            <div class="text-gray-400 pl-4"># Optimal approach O(n)</div>
+                            <div class="text-gray-300 pl-4">result = []</div>
+                            <div class="text-purple-400 pl-4">for <span class="text-gray-300">item</span> in <span class="text-gray-300">input:</span></div>
+                            <div class="text-gray-300 pl-8">if item.is_valid():</div>
+                            <div class="text-green-400 pl-12">result.append(item)</div>
+                            <div class="text-purple-400 pl-4">return <span class="text-gray-300">result</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="py-20 bg-white dark:bg-[#111827] transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Why CampusCode?</h2>
+                <p class="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">Everything you need to go from beginner to competitive programming expert in one platform.</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="p-6 bg-gray-50 dark:bg-darkCard rounded-xl hover:shadow-lg transition group border border-transparent dark:border-gray-800">
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center text-[#1E4A7A] dark:text-blue-300 text-xl mb-4 group-hover:scale-110 transition">
+                        <i class="fas fa-terminal"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">In-Browser IDE</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">Run code instantly in Python, C++, Java, and more with our powerful integrated development environment.</p>
+                </div>
+
+                <div class="p-6 bg-gray-50 dark:bg-darkCard rounded-xl hover:shadow-lg transition group border border-transparent dark:border-gray-800">
+                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center text-green-700 dark:text-green-300 text-xl mb-4 group-hover:scale-110 transition">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Ranked Contests</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">Compete in weekly contests, earn global ranking points, and see where you stand against your college peers.</p>
+                </div>
+
+                <div class="p-6 bg-gray-50 dark:bg-darkCard rounded-xl hover:shadow-lg transition group border border-transparent dark:border-gray-800">
+                    <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center text-purple-700 dark:text-purple-300 text-xl mb-4 group-hover:scale-110 transition">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Progress Tracking</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">Visualize your improvement with detailed analytics, streak tracking, and difficulty heatmaps.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-900 dark:bg-black text-gray-300 py-12 transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-8">
+            <div class="col-span-1 md:col-span-2">
+                <h4 class="text-white font-bold text-lg mb-4">CampusCode</h4>
+                <p class="text-sm text-gray-400 max-w-xs">Building the next generation of software engineers through practice, competition, and community.</p>
+            </div>
+            <div>
+                <h4 class="text-white font-bold mb-4">Platform</h4>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#" class="hover:text-white transition">Problems</a></li>
+                    <li><a href="#" class="hover:text-white transition">Contests</a></li>
+                    <li><a href="#" class="hover:text-white transition">Leaderboard</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-white font-bold mb-4">Connect</h4>
+                <div class="flex gap-4">
+                    <a href="#" class="hover:text-white transition"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="hover:text-white transition"><i class="fab fa-github"></i></a>
+                    <a href="#" class="hover:text-white transition"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="authModal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity duration-300 opacity-0">
+        
+        <div class="absolute inset-0" onclick="closeModal()"></div>
+
+        <div class="container-box auth-container modal-animate z-50 shadow-2xl" id="container-box">
+            
+            <button onclick="closeModal()" class="absolute top-4 right-4 z-[110] text-gray-400 hover:text-gray-800 dark:hover:text-white transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+
+            <div class="form-container sign-up-container">
+                <form action="{% url 'signup' %}" method="POST" class="flex flex-col items-center justify-center h-full px-12 text-center">
+                    {% csrf_token %}
+                    <h1 class="font-bold text-2xl mb-4">Create Account</h1>
+                    <div class="social-container mb-4 flex gap-4">
+                        <a href="#" class="border border-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-gray-600 transition"><i class="fab fa-google"></i></a>
+                        <a href="#" class="border border-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-gray-600 transition"><i class="fab fa-github"></i></a>
+                    </div>
+                    <span class="text-xs text-gray-400 mb-4">or use your email for registration</span>
+                    <input type="text" name="name" placeholder="Name" required class="bg-gray-100 border-none px-4 py-3 mb-2 w-full rounded text-sm outline-none focus:ring-2 focus:ring-[#1E4A7A]/20 transition" />
+                    <input type="email" name="email" placeholder="Email" required class="bg-gray-100 border-none px-4 py-3 mb-2 w-full rounded text-sm outline-none focus:ring-2 focus:ring-[#1E4A7A]/20 transition" />
+                    <input type="password" name="password" placeholder="Password" required class="bg-gray-100 border-none px-4 py-3 mb-4 w-full rounded text-sm outline-none focus:ring-2 focus:ring-[#1E4A7A]/20 transition" />
+                    <button class="rounded-full bg-[#1E4A7A] hover:bg-[#163a63] dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold text-xs uppercase px-12 py-3 tracking-wider transition-transform hover:scale-105 shadow-lg">Sign Up</button>
+                </form>
+            </div>
+
+            <div class="form-container sign-in-container">
+                <form action="{% url 'login' %}" method="POST" class="flex flex-col items-center justify-center h-full px-12 text-center">
+                    {% csrf_token %}
+                    <h1 class="font-bold text-2xl mb-4">Sign in</h1>
+                    <div class="social-container mb-4 flex gap-4">
+                        <a href="#" class="border border-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-gray-600 transition"><i class="fab fa-google"></i></a>
+                        <a href="#" class="border border-gray-300 rounded-full w-10 h-10 flex items-center justify-center text-gray-600 transition"><i class="fab fa-github"></i></a>
+                    </div>
+                    <span class="text-xs text-gray-400 mb-4">or use your account</span>
+                    <input type="email" name="email" placeholder="Email" required class="bg-gray-100 border-none px-4 py-3 mb-2 w-full rounded text-sm outline-none focus:ring-2 focus:ring-[#1E4A7A]/20 transition" />
+                    <input type="password" name="password" placeholder="Password" required class="bg-gray-100 border-none px-4 py-3 mb-2 w-full rounded text-sm outline-none focus:ring-2 focus:ring-[#1E4A7A]/20 transition" />
+                    <a href="#" class="text-xs text-gray-500 mb-4 hover:underline">Forgot your password?</a>
+                    <button class="rounded-full bg-[#1E4A7A] hover:bg-[#163a63] dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold text-xs uppercase px-12 py-3 tracking-wider transition-transform hover:scale-105 shadow-lg">Sign In</button>
+                </form>
+            </div>
+
+            <div class="overlay-container">
+                <div class="overlay">
+                    <div class="overlay-panel overlay-left">
+                        <h1 class="font-bold text-2xl mb-4">Welcome Back!</h1>
+                        <p class="text-sm font-light mb-8">To keep connected please login with your personal info</p>
+                        <button class="ghost rounded-full border border-white bg-transparent text-white font-bold text-xs uppercase px-12 py-3 hover:bg-white/10 transition" id="signInBtn">Sign In</button>
+                    </div>
+                    <div class="overlay-panel overlay-right">
+                        <h1 class="font-bold text-2xl mb-4">Hello, Friend!</h1>
+                        <p class="text-sm font-light mb-8">Enter your personal details and start your journey with us</p>
+                        <button class="ghost rounded-full border border-white bg-transparent text-white font-bold text-xs uppercase px-12 py-3 hover:bg-white/10 transition" id="signUpBtn">Sign Up</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('authModal');
+        const containerBox = document.getElementById('container-box');
+        const signUpBtn = document.getElementById('signUpBtn');
+        const signInBtn = document.getElementById('signInBtn');
+
+        // Modal Logic
+        signUpBtn.addEventListener('click', () => { containerBox.classList.add("right-panel-active"); });
+        signInBtn.addEventListener('click', () => { containerBox.classList.remove("right-panel-active"); });
+
+        function openModal(mode) {
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); }, 10);
+            if (mode === 'signup') {
+                containerBox.classList.add("right-panel-active");
+            } else {
+                containerBox.classList.remove("right-panel-active");
+            }
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") { closeModal(); }
+        });
+
+        // Theme Toggle Logic
+        var themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        var themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        // Initialize Icons based on current state
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            themeToggleLightIcon.classList.remove('hidden');
+        } else {
+            themeToggleDarkIcon.classList.remove('hidden');
+        }
+
+        function toggleTheme() {
+            // Toggle Icons
+            themeToggleDarkIcon.classList.toggle('hidden');
+            themeToggleLightIcon.classList.toggle('hidden');
+
+            // Toggle HTML Class and LocalStorage
+            if (localStorage.theme === 'light') {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            }
+        }
+    </script>
+</body>
+</html>

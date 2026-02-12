@@ -1,0 +1,415 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solve: {{ problem.title }} - CampusCode</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ["Inter", "sans-serif"] },
+                    colors: {
+                        primary: '#1E4A7A',
+                        darkBg: '#0f172a', // Slate 900
+                        darkCard: '#1e293b', // Slate 800
+                        editor: '#1e1e1e',
+                        terminal: '#0f0f0f'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Editor specifics */
+        textarea { caret-color: white; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-darkBg text-gray-800 dark:text-gray-200 font-sans h-screen flex flex-col overflow-hidden transition-colors duration-300">
+
+    <nav class="bg-white dark:bg-darkCard border-b dark:border-gray-800 px-6 py-3 flex justify-between items-center shadow-sm z-10 transition-colors duration-300">
+        <div class="flex items-center gap-4">
+            <a href="{% url 'problems' %}" class="text-gray-500 dark:text-gray-400 hover:text-[#1E4A7A] dark:hover:text-white transition flex items-center gap-2 text-sm font-medium">
+                <i class="fas fa-arrow-left"></i> <span class="hidden sm:inline">Problem List</span>
+            </a>
+            <div class="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-2"></div>
+            <h1 class="font-bold text-lg text-gray-800 dark:text-white flex items-center gap-3">
+                {{ problem.title }}
+                <span class="text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider border
+                    {% if problem.difficulty == 'Easy' %}bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-900
+                    {% elif problem.difficulty == 'Medium' %}bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-900
+                    {% else %}bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-900{% endif %}">
+                    {{ problem.difficulty }}
+                </span>
+            </h1>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button id="theme-toggle" onclick="toggleTheme()" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition focus:outline-none mr-2">
+                <i id="theme-toggle-light-icon" class="fas fa-sun hidden"></i>
+                <i id="theme-toggle-dark-icon" class="fas fa-moon hidden"></i>
+            </button>
+
+            <button id="runBtn" onclick="runCode()" class="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition font-medium text-sm border border-gray-200 dark:border-gray-600">
+                <i class="fas fa-play text-xs"></i> Run
+            </button>
+            <button id="submitBtn" onclick="submitSolution()" class="flex items-center gap-2 bg-[#1E4A7A] hover:bg-blue-800 text-white px-6 py-1.5 rounded-lg transition font-medium text-sm shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                <i class="fas fa-paper-plane text-xs"></i> Submit
+            </button>
+        </div>
+    </nav>
+
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+        
+        <div class="w-full md:w-5/12 h-full overflow-y-auto bg-white dark:bg-darkBg border-r dark:border-gray-800 p-6 transition-colors duration-300">
+            <h2 class="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center gap-2">
+                <i class="fas fa-file-alt text-[#1E4A7A] dark:text-blue-400"></i> Description
+            </h2>
+            
+            <div class="prose dark:prose-invert max-w-none text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                <p class="mb-6 whitespace-pre-line">{{ problem.statement }}</p>
+                
+                <div class="grid grid-cols-1 gap-4 mt-6">
+                    <div class="bg-gray-50 dark:bg-darkCard p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <h3 class="font-bold text-gray-900 dark:text-white mb-2 text-xs uppercase tracking-wide">Input Format</h3>
+                        <p class="text-gray-600 dark:text-gray-400 font-mono text-xs">{{ problem.input_fmt }}</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-darkCard p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                        <h3 class="font-bold text-gray-900 dark:text-white mb-2 text-xs uppercase tracking-wide">Output Format</h3>
+                        <p class="text-gray-600 dark:text-gray-400 font-mono text-xs">{{ problem.output_fmt }}</p>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <h3 class="font-bold text-gray-900 dark:text-white mb-2 text-xs uppercase tracking-wide">Constraints</h3>
+                    <code class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg border border-red-100 dark:border-red-900/50 text-xs font-mono block w-max">{{ problem.constraints }}</code>
+                </div>
+
+                <div class="mt-8">
+                    <div class="flex items-center gap-2 mb-3">
+                        <i class="fas fa-flask text-gray-400"></i>
+                        <h4 class="font-bold text-gray-900 dark:text-white text-sm">Sample Case</h4>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="relative group">
+                            <span class="absolute top-2 right-2 text-[10px] font-mono text-gray-400 uppercase">Input</span>
+                            <pre class="bg-gray-800 text-gray-300 p-4 rounded-xl text-xs font-mono overflow-x-auto border border-gray-700 shadow-inner group-hover:border-gray-600 transition">{{ problem.sample_input }}</pre>
+                        </div>
+                        <div class="relative group">
+                            <span class="absolute top-2 right-2 text-[10px] font-mono text-gray-400 uppercase">Output</span>
+                            <pre class="bg-gray-800 text-gray-300 p-4 rounded-xl text-xs font-mono overflow-x-auto border border-gray-700 shadow-inner group-hover:border-gray-600 transition">{{ problem.sample_output }}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full md:w-7/12 h-full flex flex-col bg-editor border-l border-gray-700">
+            
+            <div class="bg-[#1a1a1a] border-b border-gray-700 px-4 py-2 flex justify-between items-center select-none">
+                <div class="flex items-center gap-2 text-xs text-gray-400">
+                    <i id="langIcon" class="fab fa-python text-blue-400"></i>
+                    <span id="fileName" class="font-medium text-gray-300">main.py</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <select id="languageSelect" onchange="changeLanguage()" class="bg-[#2a2a2a] text-gray-300 border border-gray-700 rounded px-3 py-1 text-xs font-medium hover:bg-[#3a3a3a] transition cursor-pointer focus:outline-none focus:border-[#1E4A7A]">
+                        <option value="python">Python 3.10</option>
+                        <option value="cpp">C++ 17</option>
+                        <option value="c">C (GCC 9.2.0)</option>
+                        <option value="java">Java 15</option>
+                    </select>
+                    <div id="versionInfo" class="text-[10px] text-gray-500 font-mono">
+                        Python 3.10
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-1 relative">
+                <textarea id="codeEditor" 
+                    class="w-full h-full bg-editor text-gray-300 font-mono text-sm p-4 outline-none resize-none leading-relaxed"
+                    spellcheck="false"
+                    placeholder="# Write your Python solution here...">
+# Write your solution here
+import sys
+
+def solve():
+    # Read all input from stdin
+    input_data = sys.stdin.read().split()
+    if not input_data: return
+
+    # Your logic here
+    # Example: print(input_data[0])
+
+if __name__ == "__main__":
+    solve()
+</textarea>
+            </div>
+
+            <div class="h-1/3 bg-terminal border-t border-gray-700 flex flex-col shadow-2xl z-20">
+                <div class="px-4 py-2 bg-[#1a1a1a] border-b border-gray-800 flex justify-between items-center">
+                    <span class="text-gray-400 text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                        <i class="fas fa-terminal"></i> Console
+                    </span>
+                    <button onclick="clearOutput()" class="text-gray-500 hover:text-white text-xs transition">
+                        <i class="fas fa-trash mr-1"></i> Clear
+                    </button>
+                </div>
+                <div id="outputArea" class="flex-1 p-4 overflow-auto font-mono text-sm text-gray-300 whitespace-pre-wrap">
+                    <span class="text-gray-600 italic">Ready to execute. Click 'Run' to test against sample input.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        var themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            themeToggleLightIcon.classList.remove('hidden');
+        } else {
+            themeToggleDarkIcon.classList.remove('hidden');
+        }
+
+        function toggleTheme() {
+            themeToggleDarkIcon.classList.toggle('hidden');
+            themeToggleLightIcon.classList.toggle('hidden');
+
+            if (localStorage.theme === 'light') {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            }
+        }
+
+        const languageConfig = {
+            python: {
+                icon: 'fab fa-python text-blue-400',
+                fileName: 'main.py',
+                version: 'Python 3.10',
+                template: `# Write your solution here
+import sys
+
+def solve():
+    # Read all input from stdin
+    input_data = sys.stdin.read().split()
+    if not input_data: return
+
+    # Your logic here
+    # Example: print(input_data[0])
+
+if __name__ == "__main__":
+    solve()`
+            },
+            cpp: {
+                icon: 'fab fa-c text-blue-600',
+                fileName: 'main.cpp',
+                version: 'C++ 17',
+                template: `#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    // Write your solution here
+    
+    return 0;
+}`
+            },
+            c: {
+                icon: 'fas fa-code text-gray-400',
+                fileName: 'main.c',
+                version: 'C (GCC 9.2.0)',
+                template: `#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main() {
+    // Write your solution here
+    
+    return 0;
+}`
+            },
+            java: {
+                icon: 'fab fa-java text-red-600',
+                fileName: 'Main.java',
+                version: 'Java 15',
+                template: `import java.util.*;
+import java.io.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        
+        // Write your solution here
+        
+    }
+}`
+            }
+        };
+
+        function changeLanguage() {
+            const selected = document.getElementById('languageSelect').value;
+            const config = languageConfig[selected];
+            
+            document.getElementById('langIcon').className = config.icon;
+            document.getElementById('fileName').textContent = config.fileName;
+            document.getElementById('versionInfo').textContent = config.version;
+            
+            const editor = document.getElementById('codeEditor');
+            editor.placeholder = `// Write your ${selected} solution here...`;
+            editor.value = config.template;
+        }
+
+        const PROBLEM_ID = "{{ problem.id }}";
+        const CSRF_TOKEN = "{{ csrf_token }}";
+        const SAMPLE_INPUT = `{{ problem.sample_input|escapejs }}`;
+        
+        async function runCode() {
+            const code = document.getElementById('codeEditor').value;
+            const language = document.getElementById('languageSelect').value;
+            const outputDiv = document.getElementById('outputArea');
+            const btn = document.getElementById('runBtn');
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i> Running...';
+            btn.disabled = true;
+            outputDiv.innerHTML = '<span class="text-yellow-500 animate-pulse">Running against Sample Input...</span>';
+
+            try {
+                const response = await fetch("/run/code/", { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': CSRF_TOKEN
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        language: language,
+                        stdin: SAMPLE_INPUT 
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.run) {
+                    const output = data.run.stdout || "";
+                    const error = data.run.stderr || "";
+                    
+                    if (data.run.code === 0) {
+                        outputDiv.innerHTML = `<span class="text-green-500 font-bold text-xs uppercase mb-2 block">✓ Compiled Successfully</span>` + 
+                                              `<span class="text-white">${output}</span>`;
+                    } else {
+                        outputDiv.innerHTML = `<span class="text-red-500 font-bold text-xs uppercase mb-2 block">⚠ Runtime Error</span>` + 
+                                              `<span class="text-red-300">${error}</span>`;
+                    }
+                } else {
+                    outputDiv.innerHTML = `<span class="text-red-500">API Error: ${data.error || 'Unknown'}</span>`;
+                }
+
+            } catch (error) {
+                outputDiv.innerHTML = `<span class="text-red-500">Network Error: ${error.message}</span>`;
+            } finally {
+                btn.innerHTML = '<i class="fas fa-play text-xs"></i> Run';
+                btn.disabled = false;
+            }
+        }
+
+        async function submitSolution() {
+            const code = document.getElementById('codeEditor').value;
+            const language = document.getElementById('languageSelect').value;
+            const outputDiv = document.getElementById('outputArea');
+            const btn = document.getElementById('submitBtn');
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin text-xs"></i> Grading...';
+            btn.disabled = true;
+            outputDiv.innerHTML = '<span class="text-blue-400 animate-pulse">Running against Test Cases...</span>';
+
+            try {
+                const response = await fetch(`/problem/${PROBLEM_ID}/submit/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': CSRF_TOKEN
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        language: language
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    outputDiv.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full text-green-500">
+                            <i class="fas fa-check-circle text-4xl mb-3"></i>
+                            <h3 class="text-lg font-bold">Accepted</h3>
+                            <p class="text-gray-400 text-xs mt-1">${data.message}</p>
+                        </div>
+                    `;
+                } else if (data.status === 'failed') {
+                    const fail = data.results.find(r => r.status === 'Failed');
+                    outputDiv.innerHTML = `
+                        <div class="text-red-500 font-bold mb-2 flex items-center gap-2"><i class="fas fa-times-circle"></i> Wrong Answer</div>
+                        <div class="bg-gray-800 p-3 rounded border border-gray-700 text-xs">
+                            <div class="mb-2">
+                                <span class="text-gray-500 text-[10px] uppercase font-bold">Input</span>
+                                <pre class="text-white mt-1 bg-black/30 p-2 rounded">${fail.input}</pre>
+                            </div>
+                            <div class="mb-2">
+                                <span class="text-gray-500 text-[10px] uppercase font-bold">Expected Output</span>
+                                <pre class="text-green-400 mt-1 bg-black/30 p-2 rounded">${fail.expected}</pre>
+                            </div>
+                            <div>
+                                <span class="text-gray-500 text-[10px] uppercase font-bold">Your Output</span>
+                                <pre class="text-red-400 mt-1 bg-black/30 p-2 rounded">${fail.actual}</pre>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    outputDiv.innerHTML = `
+                        <div class="text-red-500 font-bold mb-2">⚠ Execution Error</div>
+                        <pre class="text-red-300 whitespace-pre-wrap text-xs">${data.details || data.message}</pre>
+                    `;
+                }
+
+            } catch (error) {
+                outputDiv.innerHTML = `<span class="text-red-500">System Error: ${error.message}</span>`;
+            } finally {
+                btn.innerHTML = '<i class="fas fa-paper-plane text-xs"></i> Submit';
+                btn.disabled = false;
+            }
+        }
+
+        function clearOutput() {
+            document.getElementById('outputArea').innerHTML = '<span class="text-gray-600 italic">Console cleared.</span>';
+        }
+    </script>
+</body>
+</html>
