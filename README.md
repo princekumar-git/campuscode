@@ -1,188 +1,118 @@
-# 🎓 CampusCode
+# CampusCode 🚀
 
-![CampusCode Banner](https://via.placeholder.com/1200x400?text=CampusCode+Platform)
-
-**CampusCode** is a competitive programming platform tailored for universities. It features a fully functional **browser-based IDE** integrated with the **Piston API** for code execution, a robust contest system, and comprehensive student performance tracking.
-
-Built with **Django** (Backend) and **Tailwind CSS** (Frontend).
+**CampusCode** is a comprehensive competitive programming and learning platform designed for educational institutes. It enables students to solve coding problems, participate in real-time contests, discuss solutions in forums, and track their progress via gamified leaderboards and detailed PDF reports.
 
 ---
 
-## ✨ Key Features
+## 🌟 Key Features
 
-### 👨‍💻 Student Features
+### 👨‍🎓 For Students
+* **Code Execution Engine:** Integrated compiler supporting multiple languages (powered by Piston API).
+* **Gamified Learning:** Earn XP, maintain daily streaks, and climb the Global and College Leaderboards.
+* **Performance Analytics:** Download detailed PDF reports of your coding journey, including accuracy, difficulty distribution, and topic proficiency.
+* **Community Forum:** Ask questions, reply to threads, and upvote the best answers to earn community XP.
+* **Contests:** Register for and participate in scheduled coding contests with live timers.
 
-* **Browser-based IDE:** Write, run, and submit code (Python, C++, Java, JavaScript) directly in the browser.
-* **Real-time Execution:** Powered by the **Piston API** for secure, sandboxed code execution.
-* **Problem Set:** Browsable library of coding challenges with difficulty tags and acceptance rates.
-* **Contest Arena:** Participate in live, upcoming, and past contests with automated timers.
-* **Dashboard:** Track global rank, college rank, XP, and daily streaks.
-* **Dark Mode:** Fully supported system-wide dark theme.
-
-### 🛡️ Admin Features
-
-* **Problem Management:** Create problems with descriptions, constraints, examples, and hidden test cases.
-* **Contest Creation:** Schedule contests, assign problems, and define rules/prizes.
-* **Analytics:** View total users, problem statistics, and submission insights.
-
----
-
-## 📂 Project Structure
-
-This project follows a standard Django architecture with a centralized `templates` directory for the Tailwind frontend.
-
-```text
-campuscode/
-├── manage.py                   # Django command-line utility
-├── campuscode/                 # Project configuration
-│   ├── __init__.py
-│   ├── settings.py             # Global settings (apps, DB, static files)
-│   ├── urls.py                 # Main URL routing
-│   └── wsgi.py                 # WSGI entry point
-├── core/                       # Main application logic
-│   ├── admin.py                # Admin panel configuration
-│   ├── apps.py
-│   ├── models.py               # DB models: User, Problem, Contest, TestCase
-│   ├── tests.py
-│   ├── urls.py                 # App-specific URL mapping
-│   └── views.py                # Views: auth, dashboard, piston proxy, contest logic
-├── templates/                  # Frontend templates (Tailwind)
-│   ├── contest.html            # List of all contests
-│   ├── contest_overview.html   # Specific contest details & rules
-│   ├── dashboard.html          # Student dashboard (stats, streaks)
-│   ├── editor.html             # CodeMirror IDE + Piston AJAX logic
-│   ├── index.html              # Landing page & login/signup
-│   ├── problem_page.html       # Problem description & solving interface
-│   ├── problems.html           # Filterable list of practice problems
-│   └── profile.html            # User profile settings
-└── README.md                   # Project documentation
-```
+### 🛡️ For Admins
+* **Problem Management:** Create problems with specific constraints, difficulty levels, and hidden test cases.
+* **Contest Management:** Schedule contests, set rules, and manage participants.
+* **Dashboard:** View platform statistics including total users, problems, and active contests.
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Component             | Technology                                     |
-| --------------------- | ---------------------------------------------- |
-| **Backend Framework** | Django 5.x (Python)                            |
-| **Frontend Styling**  | Tailwind CSS (CDN)                             |
-| **Code Execution**    | Piston API (Remote REST API)                   |
-| **Editor Component**  | CodeMirror 5 (JavaScript)                      |
-| **Database**          | SQLite (development) / PostgreSQL (production) |
+* **Backend:** Django (Python)
+* **Database:** SQLite (Default) / PostgreSQL
+* **Frontend:** HTML, CSS, JavaScript
+* **PDF Generation:** ReportLab
+* **API:** Piston API (for secure code execution)
 
 ---
 
-## 🚀 Getting Started
+## ⚙️ Local Installation & Setup
 
-### Prerequisites
+Follow these steps to run the project locally on your machine.
 
-* Python 3.10+
-* `pip` installed
-* Git installed
-
----
-
-### Installation
-
-Clone the repository and enter the directory:
-
+### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/campuscode.git
+git clone [https://github.com/princekumar-git/campuscode.git](https://github.com/princekumar-git/campuscode.git)
 cd campuscode
+
 ```
 
-Create and activate a virtual environment:
+### 2. Set Up Virtual Environment
+
+It is recommended to use a virtual environment to manage dependencies.
+
+**Windows:**
 
 ```bash
-# Windows
-python -m venv .venv
-.venv\Scripts\activate
+python -m venv venv
+venv\Scripts\activate
 
-# macOS / Linux
-python3 -m venv .venv
-source .venv/bin/activate
 ```
 
-Install dependencies:
+**macOS/Linux:**
 
 ```bash
-pip install django requests
+python3 -m venv venv
+source venv/bin/activate
+
 ```
 
----
+### 3. Install Dependencies
 
-### Database Setup
+Install the required Python packages.
 
-Apply migrations to set up the database:
+```bash
+pip install -r requirements.txt
+
+```
+
+*(Note: If `requirements.txt` is missing, install the core dependencies manually):*
+
+```bash
+pip install django requests reportlab
+
+```
+
+### 4. Database Setup
+
+Initialize the database and apply migrations.
 
 ```bash
 python manage.py makemigrations
 python manage.py migrate
+
 ```
 
-Create an admin account:
+### 5. Create Admin User
+
+To access the Admin Dashboard, create a superuser account.
 
 ```bash
 python manage.py createsuperuser
+
 ```
 
----
+### 6. Run the Server
 
-### Running the Server
-
-Start the Django development server:
+Start the development server.
 
 ```bash
 python manage.py runserver
-```
-
-Open your browser and visit:
 
 ```
-http://127.0.0.1:8000/
-```
+
+Open your browser and navigate to: `http://127.0.0.1:8000/`
 
 ---
 
-## ⚙️ Configuration Notes
+## 👥 Team Members
 
-### 🔧 Piston API (Code Execution)
-
-The `views.py` file includes a proxy endpoint for the Piston API to prevent CORS issues from the frontend.
-
-* **Endpoint:** `https://emkc.org/api/v2/piston`
-* No API key required for the public tier.
+* **Prince Kumar** (Team Leader) - Database Architecture & Backend
+* **Rupam Bhardwaj** - Backend Logic & Frontend Integration
+* **Prashant Kumar** - Frontend Design & UI/UX
 
 ---
-
-### 🎨 Static Files
-
-Tailwind CSS and FontAwesome are currently loaded via CDN in templates.
-
-For production environments, it is recommended to:
-
-* Set up Tailwind using Node.js and PostCSS
-* Use Django’s static files pipeline
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome and appreciated.
-
-Fork the repository
-Create a feature branch (`git checkout -b feature/YourFeature`)
-Commit your changes
-Push to your branch
-Open a Pull Request
-
-
----
-
-## 🧠 Vision
-
-CampusCode aims to give colleges their own private competitive programming ecosystem. It is designed to help students practice problem-solving, compete in structured contests, and allow faculty to track performance and growth in a transparent and motivating way.
-
----
-
-**Built for students. Designed for growth.** 🚀
